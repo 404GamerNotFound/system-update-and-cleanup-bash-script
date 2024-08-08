@@ -16,6 +16,10 @@
 # Make sure that you have sufficient permissions to execute system updates and that your
 # user is able to run commands with 'sudo'.
 
+if [ "$(whoami)" != "root" ]; then
+    SUDO=sudo
+fi
+
 # Define the log file location
 LOGFILE="/var/log/system_update_and_cleanup.log"
 
@@ -39,23 +43,23 @@ if ! command -v apt > /dev/null; then
 fi
 
 # Update the package sources
-sudo apt update
+${SUDO} apt update
 check_status
 
 # Upgrade the installed packages
-sudo apt upgrade -y
+${SUDO} apt upgrade -y
 check_status
 
 # Perform a distribution upgrade
-sudo apt dist-upgrade -y
+${SUDO} apt dist-upgrade -y
 check_status
 
 # Remove unnecessary packages
-sudo apt autoremove -y
+${SUDO} apt autoremove -y
 check_status
 
 # Clean the local repository cache
-sudo apt autoclean
+${SUDO} apt autoclean
 check_status
 
 echo "System update and upgrade completed: $(date)"
@@ -65,7 +69,7 @@ if [ -f /var/run/reboot-required ]; then
     echo "A system restart is required. Do you want to restart now? (yes/no)"
     read answer
     if [ "$answer" = "yes" ]; then
-        sudo reboot
+        ${SUDO} reboot
     else
         echo "Do not forget to restart the system later."
     fi
