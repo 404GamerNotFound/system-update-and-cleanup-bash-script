@@ -36,43 +36,51 @@ check_status() {
     fi
 }
 
-# Check if 'apt' is available on the system
-if ! command -v apt > /dev/null; then
-    echo "'apt' package manager is not installed on this system. Exiting."
-    exit 1
-fi
-
 # Update the package sources
-${SUDO} apt update
+${SUDO} apt-get update
 check_status
 
-# Upgrade the installed packages
-${SUDO} apt upgrade -y
-check_status
+# Is there a need for an upgrade ?
+execute_if_needed() {
+    # Execute command (equiv. to 'apt list --upgradable') and capture the output
+    updates=$(apt-get --just-print upgrade | grep "^Inst")
 
-# Perform a distribution upgrade
-${SUDO} apt dist-upgrade -y
-check_status
-
-# Remove unnecessary packages
-${SUDO} apt autoremove -y
-check_status
-
-# Clean the local repository cache
-${SUDO} apt autoclean
-check_status
-
-echo "System update and upgrade completed: $(date)"
-
-# Check if a system restart is required
-if [ -f /var/run/reboot-required ]; then
-    echo "A system restart is required. Do you want to restart now? (yes/no)"
-    read answer
-    if [ "$answer" = "yes" ]; then
-        ${SUDO} reboot
+    # Verify if output is empty
+    if [ -z "$updates" ]; then
+        echo "No package to be upgraded. Exiting now."
+        exit 0  # No need to go further at this point
     else
-        echo "Do not forget to restart the system later."
-    fi
-fi
+        echo "Performing full-upgrade now :"
 
-echo "The script has been executed successfully."
+        # Upgrade the installed packages
+        ${SUDO} apt-get full-upgrade -y
+        check_status
+        
+        # Remove unnecessary packages
+        ${SUDO} apt-get autoremove -y
+        check_status
+        
+        # Clean the local repository cache
+        ${SUDO} apt-get autoclean
+        check_status
+
+        echo "System update and upgrade completed: $(date)"
+
+        # Check if a system restart is required
+        if [ -f /var/run/reboot-required ]; then
+            echo "A system restart is required. Do you want to restart now? (yes/no)"
+            read answer
+            if [ "$answer" = "yes" ]; then
+                ${SUDO} reboot
+            else
+                echo "Do not forget to restart the system later."
+            fi
+        fi
+    
+        echo "The script has been executed successfully."
+    
+    fi
+}
+execute_if_needed
+
+
