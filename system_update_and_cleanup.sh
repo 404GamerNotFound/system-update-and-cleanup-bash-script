@@ -65,22 +65,29 @@ execute_if_needed() {
         check_status
 
         echo "System update and upgrade completed: $(date)"
-
-        # Check if a system restart is required
-        if [ -f /var/run/reboot-required ]; then
-            echo "A system restart is required. Do you want to restart now? (yes/no)"
-            read answer
-            if [ "$answer" = "yes" ]; then
-                ${SUDO} reboot
-            else
-                echo "Do not forget to restart the system later."
-            fi
-        fi
     
         echo "The script has been executed successfully."
-    
+
+        # If upgrades were performed, we shall be informed
+        # assuming exim+mail are installed and correctly configured on the system
+        if ! command -v mail > /dev/null; then
+            echo "ERROR : 'mail' is not installed on this system."
+            exit 1
+        else
+            exec > >(mail -s "Server upgrade status" someone@domain.tld) 2>&1
+        fi
     fi
 }
 execute_if_needed
+check_status
 
-
+# Check if a system restart is required
+if [ -f /var/run/reboot-required ]; then
+    echo "A system restart is required. Do you want to restart now? (yes/no)"
+    read answer
+    if [ "$answer" = "yes" ]; then
+        ${SUDO} reboot
+    else
+        echo "Do not forget to restart the system later."
+    fi
+fi
