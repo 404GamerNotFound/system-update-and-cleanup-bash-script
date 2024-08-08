@@ -1,6 +1,6 @@
-# System Update and Cleanup Script
+# System Update and Cleanup Scripts
 
-This script `system_update_and_cleanup.sh` is designed to automate the process of updating and cleaning up a Debian-based Linux system. It updates the package list, upgrades all packages, performs a distribution upgrade, removes obsolete packages, and cleans up the local package cache. If necessary, it also prompts for a system restart.
+Those scripts are designed to automate the process of updating and cleaning up a Debian-based Linux system. They update the packages list, upgrade all packages, remove obsolete packages and clean up the local package cache. If necessary, a system restart is also performed before cleaning up.
 
 ## Requirements
 
@@ -9,53 +9,67 @@ This script `system_update_and_cleanup.sh` is designed to automate the process o
 
 ## Installation
 
-1. Copy `system_update_and_cleanup.sh` to a directory on your Linux system.
-2. Make the script executable with the following command:
-   ```
-   chmod +x /path/to/system_update_and_cleanup.sh
-   ```
-3. Test the script manually with `sudo` to ensure it works correctly:
-   ```
-   sudo /path/to/system_update_and_cleanup.sh
-   ```
+(Skip this step if you'd rather perform the maintenance manually)
 
-## Logging
+1. Make a `git clone https://github.com/Loiseau2nuit/system-update-and-cleanup-bash-script.git` to any directory on your Linux system.
+2. Go to the system-update-and-cleanup-bash-script directory : `cd /path/to/system-update-and-cleanup-bash-script`
+3. Make the install script executable with the following command:
+   ```
+   chmod +x install.sh
+   ```
+4. Execute `install.sh` with `sudo`:
+   ```
+   sudo ./install.sh
+   ```
+5. Answer the three questions asked
 
-The script logs all its actions to `/var/log/system_update_and_cleanup.log`, so you can review what the script did at any time by examining this file.
+You're all set !
 
 ## Usage
 
-Run the script with `sudo` to perform system update and cleanup:
+### Automation with Cron
+
+In case you follow the installation process, you can schedule the scripts to run regularly using cron. You'll be prompted to choose :
+- a username to execute the script
+- an email address to notify in case upgrades are on the go. You won't be notified if nothing is to be upgraded
+- a time of the day on which you want to perform the maintenance.
+   
+The installation script will then update your scripts and crontab accordingly.
+System updates will be executed at the chosen time, system cleanup will be one hour after (in case any restart is needed in between).
+
+**Note:** Running system updates automatically should be done with caution, as there's a (very) small (indeed) chance that an update could cause issues with the system, especially if a restart is required. 
+Thus the notification email, so that you know when to check on your system to see if everything went smooth.
+
+
+### manual
+
+You might want not to automate the process. In this case, you can skip the 'Installation' step, then review, edit and run each script manually with `sudo` to perform system update and cleanup (in that specific order !) :
+
 ```
-sudo /path/to/system_update_and_cleanup.sh
+chmod +x system_update.sh
+chmod +x system_cleanup.sh
+sudo ./system_update.sh
+sudo ./system_cleanup.sh
 ```
 
-## Automation with Cron
+Beware thought, than doing so might induce a system restart, as planned in system_update.sh ! So make sure you're doing it at a time of the day when an unexpected restart won't affect anyone's work.
 
-You can schedule the script to run regularly using cron. Here's how to add a cron job to run the script every day at 3 am:
-
-1. Open the current user's crontab file:
-   ```
-   crontab -e
-   ```
-2. Add the following line to schedule the job (ensure you replace `/path/to/` with the actual path to the script):
-   ```
-   0 3 * * * /usr/bin/sudo /path/to/system_update_and_cleanup.sh >/dev/null 2>&1
-   ```
-3. Save and close the crontab.
-
-This cron entry runs the script at 3 am daily. The `>/dev/null 2>&1` part suppresses the output since cron jobs typically run without a terminal.
-
-**Note:** Running system updates automatically should be done with caution, as there's a small chance that an update could cause issues with the system, especially if a restart is required or if there are prompts during the update process that need to be addressed manually.
 
 ## Troubleshooting
 
-If the script does not execute as expected, check the log file at `/var/log/system_update_and_cleanup.log` for any error messages or warnings.
+
+The scripts logs all their actions to `/var/log/system_update_and_cleanup.log`, so you can review what the script did at any time by examining this file.
+
+As soon as upgrades have been detected for your system, an email is sent to the address you'll choose during the install process
+
+If the script does not execute as expected, check this log file for any error messages or warnings.
 
 ## License
 
 This script is shared under the MIT License.
 
-## Author
+## Authors
 
 Tony Brüser / 404GamerNotFound
+
+Etienne B. / Loiseau2nuit
