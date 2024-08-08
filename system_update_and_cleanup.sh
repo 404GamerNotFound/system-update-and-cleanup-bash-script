@@ -53,7 +53,9 @@ execute_if_needed() {
         echo "Performing full-upgrade now :"
 
         # Upgrade the installed packages
-        ${SUDO} apt-get full-upgrade -y
+        # keeping every modified by config file as is (new one suffixed .dpkg-dist if needed later)
+        # see https://raphaelhertzog.com/2010/09/21/debian-conffile-configuration-file-managed-by-dpkg/#:~:text=Avoiding%20the%20conffile%20prompt
+        DEBIAN_FRONTEND=noninteractive ${SUDO} -E apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" full-upgrade -y
         check_status
         
         # Remove unnecessary packages
