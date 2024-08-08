@@ -63,14 +63,6 @@ else
         # see https://raphaelhertzog.com/2010/09/21/debian-conffile-configuration-file-managed-by-dpkg/#:~:text=Avoiding%20the%20conffile%20prompt
         DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" full-upgrade -y
         check_status
-            
-        # Remove unnecessary packages
-        ${SUDO} apt-get autoremove -y
-        check_status
-            
-        # Clean the local repository cache
-        ${SUDO} apt-get autoclean
-        check_status
     
         echo "[$(date)] System update and upgrade completed"
 
