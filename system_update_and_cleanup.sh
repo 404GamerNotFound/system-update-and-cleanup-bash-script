@@ -26,8 +26,6 @@ LOGFILE="/var/log/system_update_and_cleanup.log"
 # Redirect all output and errors to the log file
 exec > >(tee -a "$LOGFILE") 2>&1
 
-echo "[$(date)] System update and upgrade process started"
-
 # Function to check the last exit status
 check_status() {
     if [ $? -ne 0 ]; then
@@ -40,56 +38,49 @@ check_status() {
 ${SUDO} apt-get update
 check_status
 
-# Is there a need for an upgrade ?
-execute_if_needed() {
-    # Execute command (equiv. to 'apt list --upgradable') and capture the output
-    updates=$(apt-get --just-print upgrade | grep "^Inst")
+# At this point, if upgrades are likely to be performed, and if wether or not the system should be restarted
+# we shall be informed by email, assuming exim4+mail are installed and correctly configured on the system
+if ! command -v mail > /dev/null; then
+    echo "[$(date)] ERROR : 'mail' is not installed on this system."
+fi
 
-    # Verify if output is empty
-    if [ -z "$updates" ]; then
-        echo "[$(date)] No package to be upgraded. Exiting now."
-        exit 0  # No need to go further at this point
-    else
-        echo "[$(date)] Performing full-upgrade now :"
+echo "[$(date)] System update and upgrade process started"    
+
+# Are there packages in need for an upgrade ?
+# Execute command (equiv. to 'apt list --upgradable') and capture the output
+updates=$(apt-get --just-print upgrade | grep "^Inst")
+
+# Verify if output is empty
+if [ -z "$updates" ]; then
+    echo "[$(date)] No package to be upgraded. Exiting now."
+    exit 0  # No need to go further at this point
+else
+    {
+        echo "[$(date)] Performing full-upgrade now !"
 
         # Upgrade the installed packages
         # keeping every modified by config file as is (new one suffixed .dpkg-dist if needed later)
         # see https://raphaelhertzog.com/2010/09/21/debian-conffile-configuration-file-managed-by-dpkg/#:~:text=Avoiding%20the%20conffile%20prompt
-        DEBIAN_FRONTEND=noninteractive ${SUDO} -E apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" full-upgrade -y
+        DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" full-upgrade -y
         check_status
-        
+            
         # Remove unnecessary packages
         ${SUDO} apt-get autoremove -y
         check_status
-        
+            
         # Clean the local repository cache
         ${SUDO} apt-get autoclean
         check_status
-
-        echo "[$(date)] System update and upgrade completed"
     
-        echo "[$(date)] The script has been executed successfully."
+        echo "[$(date)] System update and upgrade completed"
 
-        # If upgrades were performed, we shall be informed
-        # assuming exim+mail are installed and correctly configured on the system
-        if ! command -v mail > /dev/null; then
-            echo "[$(date)] ERROR : 'mail' is not installed on this system."
-            exit 1
+        # Check if a system restart is required
+        if [ -f /var/run/reboot-required ]; then
+            echo "[$(date)] A system restart has been required"
+            ${SUDO} reboot
         else
-            exec > >(mail -s "Server upgrade status" someone@domain.tld) 2>&1
-        fi
-    fi
-}
-execute_if_needed
-check_status
-
-# Check if a system restart is required
-if [ -f /var/run/reboot-required ]; then
-    echo "[$(date)] A system restart is required. Do you want to restart now? (yes/no)"
-    read answer
-    if [ "$answer" = "yes" ]; then
-        ${SUDO} reboot
-    else
-        echo "[$(date)] Do not forget to restart the system later."
-    fi
+            echo "[$(date)] No system restart was required"
+            exit 0
+        fi        
+    }|mail -s "Server upgrade status" someone@domain.tld 2>&1
 fi
