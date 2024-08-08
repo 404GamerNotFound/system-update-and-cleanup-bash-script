@@ -26,12 +26,12 @@ LOGFILE="/var/log/system_update_and_cleanup.log"
 # Redirect all output and errors to the log file
 exec > >(tee -a "$LOGFILE") 2>&1
 
-echo "System update and upgrade process started: $(date)"
+echo "[$(date)] System update and upgrade process started"
 
 # Function to check the last exit status
 check_status() {
     if [ $? -ne 0 ]; then
-        echo "An error has occurred. Check the log file: $LOGFILE"
+        echo "[$(date)] An error has occurred. Check the log file: $LOGFILE"
         exit 1
     fi
 }
@@ -47,10 +47,10 @@ execute_if_needed() {
 
     # Verify if output is empty
     if [ -z "$updates" ]; then
-        echo "No package to be upgraded. Exiting now."
+        echo "[$(date)] No package to be upgraded. Exiting now."
         exit 0  # No need to go further at this point
     else
-        echo "Performing full-upgrade now :"
+        echo "[$(date)] Performing full-upgrade now :"
 
         # Upgrade the installed packages
         # keeping every modified by config file as is (new one suffixed .dpkg-dist if needed later)
@@ -66,14 +66,14 @@ execute_if_needed() {
         ${SUDO} apt-get autoclean
         check_status
 
-        echo "System update and upgrade completed: $(date)"
+        echo "[$(date)] System update and upgrade completed"
     
-        echo "The script has been executed successfully."
+        echo "[$(date)] The script has been executed successfully."
 
         # If upgrades were performed, we shall be informed
         # assuming exim+mail are installed and correctly configured on the system
         if ! command -v mail > /dev/null; then
-            echo "ERROR : 'mail' is not installed on this system."
+            echo "[$(date)] ERROR : 'mail' is not installed on this system."
             exit 1
         else
             exec > >(mail -s "Server upgrade status" someone@domain.tld) 2>&1
@@ -85,11 +85,11 @@ check_status
 
 # Check if a system restart is required
 if [ -f /var/run/reboot-required ]; then
-    echo "A system restart is required. Do you want to restart now? (yes/no)"
+    echo "[$(date)] A system restart is required. Do you want to restart now? (yes/no)"
     read answer
     if [ "$answer" = "yes" ]; then
         ${SUDO} reboot
     else
-        echo "Do not forget to restart the system later."
+        echo "[$(date)] Do not forget to restart the system later."
     fi
 fi
