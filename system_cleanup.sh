@@ -24,21 +24,25 @@ fi
 LOGFILE="/var/log/system_update_and_cleanup.log"
 
 # Redirect all output and errors to the log file
-exec > >(tee -a "$LOGFILE") 2>&1
+exec > >(${SUDO} tee -a "$LOGFILE") 2>&1
 
 # Function to check the last exit status
 check_status() {
     if [ $? -ne 0 ]; then
         echo "[$(date)] An error has occurred. Check the log file: $LOGFILE"
         exit 1
+    else
+	echo "[$(date)] OK"
     fi
 }
-        
-# Remove unnecessary packages
+
+echo "[$(date)] System cleanup is starting ..."
+
+echo "[$(date)] Remove unnecessary packages"
 ${SUDO} apt-get autoremove -y
 check_status
-    
-# Clean the local repository cache
+
+echo "[$(date)] Clean the local repository cache"
 ${SUDO} apt-get autoclean
 check_status
 

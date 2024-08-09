@@ -24,27 +24,29 @@ fi
 LOGFILE="/var/log/system_update_and_cleanup.log"
 
 # Redirect all output and errors to the log file
-exec > >(tee -a "$LOGFILE") 2>&1
+exec > >(${SUDO} tee -a "$LOGFILE") 2>&1
 
 # Function to check the last exit status
 check_status() {
     if [ $? -ne 0 ]; then
         echo "[$(date)] An error has occurred. Check the log file: $LOGFILE"
         exit 1
+    else
+	echo "[$(date)] OK"
     fi
 }
 
-# Update the package sources
+echo "[$(date)] Update the package sources"
 ${SUDO} apt-get update
 check_status
 
 # At this point, if upgrades are likely to be performed, and if wether or not the system should be restarted
 # we shall be informed by email, assuming exim4+mail are installed and correctly configured on the system
 if ! command -v mail > /dev/null; then
-    echo "[$(date)] ERROR : 'mail' is not installed on this system."
+    echo "[$(date)] ERROR : 'mail' is not installed on this system. No notification will be sent"
 fi
 
-echo "[$(date)] System update and upgrade process started"    
+echo "[$(date)] Checking for upgrades ..."
 
 # Are there packages in need for an upgrade ?
 # Execute command (equiv. to 'apt list --upgradable') and capture the output
@@ -52,11 +54,17 @@ updates=$(apt-get --just-print upgrade | grep "^Inst")
 
 # Verify if output is empty
 if [ -z "$updates" ]; then
-    echo "[$(date)] No package to be upgraded. Exiting now."
+    echo "[$(date)] No package needs to be upgraded. Exiting now."
     exit 0  # No need to go further at this point
 else
     {
-        echo "[$(date)] Performing full-upgrade now !"
+	# At this point, if upgrades are likely to be performed, and wether or not the system should be restarted
+	# we shall be informed by email, assuming exim4+mail are installed and correctly configured on the system
+	if ! command -v mail > /dev/null; then
+	    echo "[$(date)] ERROR : 'mail' command is not available on this system. No notification will be sent"
+	fi
+
+        echo "[$(date)] Starting packages full-upgrade ..."
 
         # Upgrade the installed packages
         # keeping every modified by config file as is (new one suffixed .dpkg-dist if needed later)
@@ -64,14 +72,14 @@ else
         DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" full-upgrade -y
         check_status
     
-        echo "[$(date)] System update and upgrade completed"
+        echo "[$(date)] Packages upgrade completed"
 
         # Check if a system restart is required
         if [ -f /var/run/reboot-required ]; then
-            echo "[$(date)] A system restart has been required"
+            echo "[$(date)] A system restart is required. Proceeding now !"
             ${SUDO} reboot
         else
-            echo "[$(date)] No system restart was required"
+            echo "[$(date)] No system restart required."
             exit 0
         fi        
     }|mail -s "Server upgrade status" someone@domain.tld 2>&1

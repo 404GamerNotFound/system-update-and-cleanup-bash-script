@@ -21,7 +21,6 @@ fi
 
 echo "SYSTEM UPDATE AND CLEANUP SCRIPT"
 echo "This script ensemble is designed to automate the process of updating and cleaning up a Debian-based Linux system. It updates the package list, upgrades all packages, removes obsolete packages, and cleans up the local package cache. If necessary, it also performs a system restart."
-echo "WARNING : You should first manually test system_update.sh and system_cleanup.sh and make sure they suit your needs, before setting up their automation !"
 
 # Function to validate an email address
 is_valid_email() {
@@ -33,7 +32,7 @@ is_valid_email() {
 while true; do
     echo "-----------------------------------------------------------"
     echo "Please choose a user to perform the tasks"
-    echo "User must exit on the system, have sudo privileges and shouldn't be root"
+    echo "User must exist on the system, have sudo privileges and shouldn't be root"
     read -r user
 
     # Check if the user input is empty
@@ -66,7 +65,7 @@ done
 # 2. Ask for the email address for notifications (mandatory)
 while true; do
     echo "-----------------------------------------------------------"
-    echo "Please, type the email address you wish to be notified on (mandatory):"
+    echo "Please, enter the email address you wish to be notified on :"
     read -r email
 
     # Validate the email address
@@ -85,7 +84,7 @@ done
 
 # 3. Ask for the time of day to perform the maintenance routine
 while true; do
-    echo "What time of the day do you wish to perform the maintenance routine? (choose a strict number between 0 (midnight) and 23 (11PM))"
+    echo "What time of the day do you wish to perform the maintenance routine? (choose an integer between 0 (midnight) and 23 (11PM))"
     read -r time
 
     # Check if the input is an integer between 0 and 23
