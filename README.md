@@ -1,6 +1,8 @@
-# System Update and Cleanup Scripts
 
-Those scripts are designed to automate the process of updating and cleaning up a Debian-based Linux system. They update the packages list, upgrade all packages, remove obsolete packages and clean up the local package cache. If necessary, a system restart is also performed before cleaning up.
+# AUTOMATED PACKAGE MAINTENANCE FOR DEBIAN-BASED LINUX SYSTEMS
+
+This script suite automates the maintenance of a Debian-based Linux system. 
+It handles package updates, upgrades all installed packages, removes obsolete packages, and cleans up the local package cache. If required, it will also trigger a system restart.
 
 ## Requirements
 
@@ -21,7 +23,7 @@ Those scripts are designed to automate the process of updating and cleaning up a
    ```
    sudo ./install.sh
    ```
-5. Answer the three questions asked
+5. Answer the few questions asked
 
 You're all set !
 
@@ -30,11 +32,10 @@ You're all set !
 ### Automation with Cron
 
 In case you follow the installation process, you can schedule the scripts to run regularly using cron. You'll be prompted to choose :
-- a username to execute the script
 - an email address to notify in case upgrades are on the go. You won't be notified if nothing is to be upgraded
 - a time of the day on which you want to perform the maintenance.
    
-The installation script will then update your scripts and crontab accordingly.
+The installation script will then update your scripts and cron jobs accordingly.
 System updates will be executed at the chosen time, system cleanup will be one hour after (in case any restart is needed in between).
 
 **Note:** Running system updates automatically should be done with caution, as there's a (very) small (indeed) chance that an update could cause issues with the system, especially if a restart is required. 
@@ -58,15 +59,15 @@ Beware thought, than doing so might induce a system restart, as planned in syste
 ## Troubleshooting
 
 
-The scripts logs all their actions to `/var/log/system_update_and_cleanup.log`, so you can review what the script did at any time by examining this file.
+The scripts logs all their actions to `/var/log/system_update.log` and `/var/log/system_cleanup.log`, so you can review what the script did at any time by examining this file.
 
 As soon as upgrades have been detected for your system, an email is sent to the address you'll choose during the install process
 
-If the script does not execute as expected, check this log file for any error messages or warnings.
+If the scripts do not execute as expected, check those log files for any error messages or warnings.
 
 ## License
 
-This script is shared under the MIT License.
+This scripts suite is shared under the MIT License.
 
 ## Authors
 

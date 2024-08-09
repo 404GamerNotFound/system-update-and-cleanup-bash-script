@@ -19,8 +19,9 @@ if [ "$(whoami)" != "root" ]; then
     SUDO=sudo
 fi
 
-echo "SYSTEM UPDATE AND CLEANUP SCRIPT"
-echo "This script ensemble is designed to automate the process of updating and cleaning up a Debian-based Linux system. It updates the package list, upgrades all packages, removes obsolete packages, and cleans up the local package cache. If necessary, it also performs a system restart."
+echo "AUTOMATED PACKAGE MAINTENANCE FOR DEBIAN-BASED LINUX SYSTEMS"
+echo "This script suite automates the maintenance of a Debian-based Linux system. It handles package updates, upgrades all installed packages, removes obsolete packages, and cleans up the local package cache. If required, it will also trigger a system restart."
+echo "WARNING : Before you go further with this, you should review the 2 scripts system_update.sh and system_cleanup.sh to make sure they suit your needs and, give them a first manual run to make sure everything is OK. Please refer to the documentation (or README.md file) for more information."
 
 # Function to validate an email address
 is_valid_email() {
@@ -28,39 +29,26 @@ is_valid_email() {
     [[ "$email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]
 }
 
-# 1. Ask for a user to perform the tasks (user must have sudo privileges and shouldn't be root)
-while true; do
+
+# 1. Copying files in path for a system wide utilization (+ remove .sh extension)
+
+# Check if files exist and confirm replacement
+if [ -f /usr/local/bin/system_update ] || [ -f /usr/local/bin/system_cleanup ]; then
     echo "-----------------------------------------------------------"
-    echo "Please choose a user to perform the tasks"
-    echo "User must exist on the system, have sudo privileges and shouldn't be root"
-    read -r user
-
-    # Check if the user input is empty
-    if [ -z "$user" ]; then
-        echo "No user provided. Please try again."
-        continue
-    fi
-
-    # Check if the user is "root"
-    if [ "$user" = "root" ]; then
-        echo "The user cannot be root. Please choose another user."
-        continue
-    fi
-
-    # Check if the user exists on the system
-    if ! id "$user" &>/dev/null; then
-        echo "User '$user' does not exist. Please try again."
-        continue
-    fi
-
-    # Check if the user is part of the sudo group
-    if groups "$user" | grep -qw "sudo"; then
-        echo "User '$user' has sudo privileges."
-        break
+    read -p "Files already exist in /usr/local/bin/. Do you want to replace them? (y/n): " choice
+    if [ "$choice" = "y" ]; then
+        ${SUDO} cp -f system_*.sh /usr/local/bin/
+        ${SUDO} mv -f /usr/local/bin/system_*.sh /usr/local/bin/system_*
+	echo "Done."
     else
-        echo "User '$user' does not have sudo privileges. Please choose another user."
+        echo "Files not replaced. Aborting !"
+	exit 1
     fi
-done
+else
+    ${SUDO} cp system_*.sh /usr/local/bin/
+    ${SUDO} mv /usr/local/bin/system_*.sh /usr/local/bin/system_*
+fi
+
 
 # 2. Ask for the email address for notifications (mandatory)
 while true; do
@@ -70,10 +58,10 @@ while true; do
 
     # Validate the email address
     if is_valid_email "$email"; then
-        echo "Valid email address. Updating system_update.sh..."
+        echo "Valid email address. Updating system_update command..."
         
         # Replace 'someone@domain.tld' in system_update.sh with the provided email address
-        sed -i "s/someone@domain.tld/$email/" ./system_update.sh
+        sed -i "s/someone@domain.tld/$email/" /usr/local/bin/system_update
         
         echo "Email address updated successfully."
         break
@@ -84,7 +72,7 @@ done
 
 # 3. Ask for the time of day to perform the maintenance routine
 while true; do
-    echo "What time of the day do you wish to perform the maintenance routine? (choose an integer between 0 (midnight) and 23 (11PM))"
+    echo "What time should the package maintenance begin? (choose an integer between 0 (midnight) and 23 (11PM))"
     read -r time
 
     # Check if the input is an integer between 0 and 23
@@ -96,38 +84,44 @@ while true; do
     fi
 done
 
-# 4. Check if the user's crontab exists, and create it if not
-if ! crontab -l -u "$user" &>/dev/null; then
-    echo "No crontab for user '$user'. Creating a new crontab."
-    echo "" | crontab -u "$user" -
-fi
-
-# 5. Update the crontab for the selected user
-# Define the paths to the scripts (assuming they are in the same directory as this script)
-script_dir="$(dirname "$(realpath "$0")")"
-update_script="$script_dir/system_update.sh"
-cleanup_script="$script_dir/system_cleanup.sh"
+# 4. Schedule the maintenance tasks
+# Define the paths to the scripts for further reference
+update_script="/usr/local/bin/system_update"
+cleanup_script="/usr/local/bin/system_cleanup"
 
 # Calculate the time for the cleanup script (1 hour after the chosen time)
 cleanup_time=$(( (time + 1) % 24 ))
 
-# Update the crontab for the specified user
-(
-    crontab -l -u "$user" 2>/dev/null
-    echo "0 $time * * * /usr/bin/sudo $update_script"
-    echo "0 $cleanup_time * * * /usr/bin/sudo $cleanup_script"
-) | crontab -u "$user" -
+# Define the cron job entries
+update_job="0 $time * * * root /usr/bin/sudo $update_script"
+cleanup_job="0 $cleanup_time * * * root /usr/bin/sudo $cleanup_script"
 
-echo "Crontab updated for user '$user'."
-echo "System update will run daily at $time:00."
+# Define the cron file paths
+update_cron_file="/etc/cron.d/system_update"
+cleanup_cron_file="/etc/cron.d/system_cleanup"
+
+# Create or replace the cron files with the new job entries
+echo "$update_job" | ${SUDO} tee "$update_cron_file" > /dev/null
+echo "$cleanup_job" | ${SUDO} tee "$cleanup_cron_file" > /dev/null
+
+# Set the correct permissions for the cron files
+${SUDO} chmod 644 "$update_cron_file"
+${SUDO} chmod 644 "$cleanup_cron_file"
+
+# Ensure that the files are owned by root
+${SUDO} chown root:root "$update_cron_file"
+${SUDO} chown root:root "$cleanup_cron_file"
+
+echo "Cron job created or updated successfully."
+echo "Packages updates will run daily at $time:00."
 echo "System cleanup will run daily at $cleanup_time:00."
-echo "Email $email will be notified only if an upgrade and/or system restart occurs."
-echo "See also /var/log/system_update_and_cleanup.log for more detailled outputs"
+echo "The email address $email will be notified if an upgrade or a system restart occurs."
+echo "See also /var/log/system_update.log and system_cleanup.log for more detailled outputs."
 
 
 # 6. Make the scripts executable
-${SUDO} chmod +x system_update.sh
-${SUDO} chmod +x system_cleanup.sh
+${SUDO} chmod +x "$update_script"
+${SUDO} chmod +x "$cleanup_script"
 
-echo "you're all set ! :-)"
+echo "You're all set ! :-)"
 exit 0

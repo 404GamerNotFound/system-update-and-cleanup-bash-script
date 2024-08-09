@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# System Update and Cleanup Script
-# ---------------------------------
-# This script automates the update and cleanup process for Debian-based Linux systems.
-# It updates the package lists, upgrades all packages, performs a distribution upgrade,
-# removes obsolete packages, and cleans up the package cache.
+# Automated package maintenance for Debian-based Linux systems
+# system_update.sh
+# ------------------------------------------------------------
+# This script automates the update process for Debian-based Linux systems.
+# It updates the package lists, upgrades all packages and perform a system restart if required
 #
 # Before using this script, ensure that you have backed up all important data. While updates
 # generally are safe, there is always a small risk of system instability or data loss during
@@ -16,15 +16,11 @@
 # Make sure that you have sufficient permissions to execute system updates and that your
 # user is able to run commands with 'sudo'.
 
-if [ "$(whoami)" != "root" ]; then
-    SUDO=sudo
-fi
-
 # Define the log file location
-LOGFILE="/var/log/system_update_and_cleanup.log"
+LOGFILE="/var/log/system_update.log"
 
 # Redirect all output and errors to the log file
-exec > >(${SUDO} tee -a "$LOGFILE") 2>&1
+exec > >(tee -a "$LOGFILE") 2>&1
 
 # Function to check the last exit status
 check_status() {
@@ -37,14 +33,8 @@ check_status() {
 }
 
 echo "[$(date)] Update the package sources"
-${SUDO} apt-get update
+apt-get update
 check_status
-
-# At this point, if upgrades are likely to be performed, and if wether or not the system should be restarted
-# we shall be informed by email, assuming exim4+mail are installed and correctly configured on the system
-if ! command -v mail > /dev/null; then
-    echo "[$(date)] ERROR : 'mail' is not installed on this system. No notification will be sent"
-fi
 
 echo "[$(date)] Checking for upgrades ..."
 
@@ -54,7 +44,7 @@ updates=$(apt-get --just-print upgrade | grep "^Inst")
 
 # Verify if output is empty
 if [ -z "$updates" ]; then
-    echo "[$(date)] No package needs to be upgraded. Exiting now."
+    echo "[$(date)] No package needs to be upgraded. System is up to date. Exiting now."
     exit 0  # No need to go further at this point
 else
     {
@@ -69,18 +59,18 @@ else
         # Upgrade the installed packages
         # keeping every modified by config file as is (new one suffixed .dpkg-dist if needed later)
         # see https://raphaelhertzog.com/2010/09/21/debian-conffile-configuration-file-managed-by-dpkg/#:~:text=Avoiding%20the%20conffile%20prompt
-        DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" full-upgrade -y
+        DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" full-upgrade -y
         check_status
-    
-        echo "[$(date)] Packages upgrade completed"
+
+        echo "[$(date)] Packages upgrade completed. System is up to date"
 
         # Check if a system restart is required
         if [ -f /var/run/reboot-required ]; then
             echo "[$(date)] A system restart is required. Proceeding now !"
-            ${SUDO} reboot
+            reboot
         else
-            echo "[$(date)] No system restart required."
+            echo "[$(date)] No system restart required. Exiting now."
             exit 0
-        fi        
+        fi
     }|mail -s "Server upgrade status" someone@domain.tld 2>&1
 fi

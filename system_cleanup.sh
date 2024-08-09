@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# System Update and Cleanup Script
+# Automated package maintenance for Debian-based Linux systems
+# system_cleanup.sh
 # ---------------------------------
-# This script automates the update and cleanup process for Debian-based Linux systems.
-# It updates the package lists, upgrades all packages, performs a distribution upgrade,
-# removes obsolete packages, and cleans up the package cache.
+# This script automates the cleanup process for Debian-based Linux systems.
+# It removes obsolete packages, and cleans up the package cache.
 #
 # Before using this script, ensure that you have backed up all important data. While updates
 # generally are safe, there is always a small risk of system instability or data loss during
@@ -16,15 +16,11 @@
 # Make sure that you have sufficient permissions to execute system updates and that your
 # user is able to run commands with 'sudo'.
 
-if [ "$(whoami)" != "root" ]; then
-    SUDO=sudo
-fi
-
 # Define the log file location
-LOGFILE="/var/log/system_update_and_cleanup.log"
+LOGFILE="/var/log/system_cleanup.log"
 
 # Redirect all output and errors to the log file
-exec > >(${SUDO} tee -a "$LOGFILE") 2>&1
+exec > >(tee -a "$LOGFILE") 2>&1
 
 # Function to check the last exit status
 check_status() {
@@ -39,11 +35,11 @@ check_status() {
 echo "[$(date)] System cleanup is starting ..."
 
 echo "[$(date)] Remove unnecessary packages"
-${SUDO} apt-get autoremove -y
+apt-get autoremove -y
 check_status
 
 echo "[$(date)] Clean the local repository cache"
-${SUDO} apt-get autoclean
+apt-get autoclean
 check_status
 
 echo "[$(date)] System and local repository cache are now clean !"
