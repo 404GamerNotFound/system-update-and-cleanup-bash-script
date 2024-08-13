@@ -37,16 +37,20 @@ if [ -f /usr/local/bin/system_update ] || [ -f /usr/local/bin/system_cleanup ]; 
     echo "-----------------------------------------------------------"
     read -p "Files already exist in /usr/local/bin/. Do you want to replace them? (y/n): " choice
     if [ "$choice" = "y" ]; then
-        ${SUDO} cp -f system_*.sh /usr/local/bin/
-        ${SUDO} mv -f /usr/local/bin/system_*.sh /usr/local/bin/system_*
+        for file in system_*.sh; do
+            base_name=$(basename "$file" .sh)
+            ${SUDO} cp -f "$file" "/usr/local/bin/$base_name"
+        done
 	echo "Done."
     else
         echo "Files not replaced. Aborting !"
 	exit 1
     fi
 else
-    ${SUDO} cp system_*.sh /usr/local/bin/
-    ${SUDO} mv /usr/local/bin/system_*.sh /usr/local/bin/system_*
+    for file in system_*.sh; do
+        base_name=$(basename "$file" .sh)
+        ${SUDO} cp "$file" "/usr/local/bin/$base_name"
+    done
 fi
 
 
@@ -93,8 +97,8 @@ cleanup_script="/usr/local/bin/system_cleanup"
 cleanup_time=$(( (time + 1) % 24 ))
 
 # Define the cron job entries
-update_job="0 $time * * * root /usr/bin/sudo $update_script"
-cleanup_job="0 $cleanup_time * * * root /usr/bin/sudo $cleanup_script"
+update_job="0 $time * * * root $update_script"
+cleanup_job="0 $cleanup_time * * * root $cleanup_script"
 
 # Define the cron file paths
 update_cron_file="/etc/cron.d/system_update"

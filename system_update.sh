@@ -20,7 +20,7 @@
 LOGFILE="/var/log/system_update.log"
 
 # Redirect all output and errors to the log file
-exec > >(tee -a "$LOGFILE") 2>&1
+exec >> $LOGFILE 2>&1
 
 # Function to check the last exit status
 check_status() {
@@ -67,7 +67,7 @@ else
         # Check if a system restart is required
         if [ -f /var/run/reboot-required ]; then
             echo "[$(date)] A system restart is required. Proceeding now !"
-            reboot
+            /usr/bin/systemctl reboot
         else
             echo "[$(date)] No system restart required. Exiting now."
             exit 0

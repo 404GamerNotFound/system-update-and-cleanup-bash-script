@@ -20,7 +20,7 @@
 LOGFILE="/var/log/system_cleanup.log"
 
 # Redirect all output and errors to the log file
-exec > >(tee -a "$LOGFILE") 2>&1
+exec >> $LOGFILE 2>&1
 
 # Function to check the last exit status
 check_status() {
@@ -39,7 +39,7 @@ apt-get autoremove -y
 check_status
 
 echo "[$(date)] Clean the local repository cache"
-apt-get autoclean
+apt-get autoclean -y
 check_status
 
 echo "[$(date)] System and local repository cache are now clean !"
