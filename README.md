@@ -13,7 +13,7 @@ It handles package updates, upgrades all installed packages, removes obsolete pa
 
 (Skip this step if you'd rather perform the maintenance manually)
 
-1. Make a `git clone https://github.com/Loiseau2nuit/system-update-and-cleanup-bash-script.git` to any directory on your Linux system.
+1. Make a `git clone https://github.com/404GamerNotFound/system-update-and-cleanup-bash-script.git` to any directory on your Linux system.
 2. Go to the system-update-and-cleanup-bash-script directory : `cd /path/to/system-update-and-cleanup-bash-script`
 3. Make the install script executable with the following command:
    ```
