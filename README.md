@@ -78,3 +78,7 @@ This scripts suite is shared under the MIT License.
 
 - Tony Brüser / 404GamerNotFound
 - Etienne B. / Loiseau2nuit
+
+## Support
+
+If you find this project helpful, you can support it via PayPal: [paypal.me/TonyBrueser](https://www.paypal.com/paypalme/TonyBrueser)
